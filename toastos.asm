@@ -1,182 +1,167 @@
-   mov ax, 0x07C0  ; set up segments
-   mov ds, ax
-   mov es, ax
+[org 0x7C00]
+
+main:
+	mov ax, 0x0000
+	mov ds, ax
 	
-   mov si, welcome
-   call print_string
-   mov si, info
-   call print_string
- 
- loop:
-   mov si, prompt
-   call print_string
- 
-   mov di, buffer
-   call get_string
- 
-   mov si, buffer
-   cmp byte [si], 0  ; blank line?
-   je loop           ; yes, ignore it
- 
-   mov si, buffer
-   mov di, cmd_hi  ; "hi" command
-   call strcmp
-   jc .helloworld
- 
-   mov si, buffer
-   mov di, cmd_help  ; "help" command
-   call strcmp
-   jc .help
-   
-   mov si, buffer
-   mov di, cmd_joel  ; "joel" command
-   call strcmp
-   jc .joel
-   
-   mov si, buffer
-   mov di, cmd_welcome  ; "welcome" command
-   call strcmp
-   jc .welcome
- 
-   mov si, badcommand
-   call print_string 
-   jmp loop  
- 
- .helloworld:
-   mov si, msg_helloworld
-   call print_string
- 
-   jmp loop
- 
- .help:
-   mov si, msg_version
-   call print_string
-   mov si, msg_help
-   call print_string
- 
-   jmp loop
-   
- .joel:
-   mov si, msg_joel
-   call print_string
- 
-   jmp loop
-   
-.welcome:
-   mov si, welcome
-   call print_string
- 
-   jmp loop
- 
- welcome db "Welcome to ToastOS!", 0x0D, 0x0A, 0
- info db "For more info type help", 0x0D, 0x0A, 0
- cmd_welcome db 'welcome', 0
- msg_helloworld db 'Hello World!', 0x0D, 0x0A, 0
- badcommand db 'Invalid command', 0x0D, 0x0A, 0
- prompt db 'ToastOS$ ', 0
- cmd_hi db 'hi', 0
- cmd_help db 'help', 0
- msg_help db 'Commands: hi, help, joel, welcome', 0x0D, 0x0A, 0
- msg_version db 'ToastOS copyright GPLv3 2010 version 1.0.', 0x0D, 0x0A, 0
- cmd_joel db 'joel', 0
- msg_joel db 'Joel is cool', 0x0D, 0x0A, 0
- buffer times 64 db 0
- 
- ; ================
- ; calls start here
- ; ================
- 
- print_string:
-   lodsb        ; grab a byte from SI
- 
-   or al, al  ; logical or AL by itself
-   jz .done   ; if the result is zero, get out
- 
-   mov ah, 0x0E
-   int 0x10      ; otherwise, print out the character!
- 
-   jmp print_string
- 
- .done:
-   ret
- 
- get_string:
-   xor cl, cl
- 
- .loop:
-   mov ah, 0
-   int 0x16   ; wait for keypress
- 
-   cmp al, 0x08    ; backspace pressed?
-   je .backspace   ; yes, handle it
- 
-   cmp al, 0x0D  ; enter pressed?
-   je .done      ; yes, we're done
- 
-   cmp cl, 0x3F  ; 63 chars inputted?
-   je .loop      ; yes, only let in backspace and enter
- 
-   mov ah, 0x0E
-   int 0x10      ; print out character
- 
-   stosb  ; put character in buffer
-   inc cl
-   jmp .loop
- 
- .backspace:
-   cmp cl, 0	; beginning of string?
-   je .loop	; yes, ignore the key
- 
-   dec di
-   mov byte [di], 0	; delete character
-   dec cl		; decrement counter as well
- 
-   mov ah, 0x0E
-   mov al, 0x08
-   int 10h		; backspace on the screen
- 
-   mov al, ' '
-   int 10h		; blank character out
- 
-   mov al, 0x08
-   int 10h		; backspace again
- 
-   jmp .loop	; go to the main loop
- 
- .done:
-   mov al, 0	; null terminator
-   stosb
- 
-   mov ah, 0x0E
-   mov al, 0x0D
-   int 0x10
-   mov al, 0x0A
-   int 0x10		; newline
- 
-   ret
- 
- strcmp:
- .loop:
-   mov al, [si]   ; grab a byte from SI
-   mov bl, [di]   ; grab a byte from DI
-   cmp al, bl     ; are they equal?
-   jne .notequal  ; nope, we're done.
- 
-   cmp al, 0  ; are both bytes (they were equal before) null?
-   je .done   ; yes, we're done.
- 
-   inc di     ; increment DI
-   inc si     ; increment SI
-   jmp .loop  ; loop!
- 
- .notequal:
-   clc  ; not equal, clear the carry flag
-   ret
- 
- .done: 	
-   stc  ; equal, set the carry flag
-   ret
- 
-   times 510-($-$$) db 0
-   db 0x55
-   db 0xAA
+	mov si, welcome
+	call puts
+	mov si, info
+	call puts
+	
+	.main_loop:
+		mov si, prompt
+		call puts
+		
+		mov di, buffer
+		call gets
+		
+		mov si, buffer
+		cmp byte [si], 0
+		je .main_loop
+		
+		mov si, buffer
+		mov di, cmd_help
+		call strcmp
+		jc .help
+		
+		mov si, buffer
+		mov di, cmd_cool
+		call strcmp
+		jc .cool
+		
+		mov si, buffer
+		mov di, cmd_version
+		call strcmp
+		jc .version
+		
+		mov si, buffer
+		call puts
+		mov si, invalidCmd
+		call puts
+		jmp .main_loop
+		
+		.help:
+			mov si, msg_help
+			call puts
+			jmp .main_loop
+		
+		.cool:
+			mov si, msg_cool
+			call puts
+			jmp .main_loop
+		
+		.version:
+			mov si, msg_version
+			call puts
+			jmp .main_loop
+		
+
+puts:
+	mov ah, 0x0E
+	mov bh, 0x00
+	mov bl, 0x07
+	
+	.nextChar:
+		lodsb
+		or al, al
+	
+		jz .return
+	
+		int 0x10
+		jmp .nextChar
+	
+	.return:
+		ret
+		
+gets:
+	xor cl, cl
+	
+	.loop:
+		mov ah, 0
+		int 0x16
+		
+		cmp al, 0x08
+		je .backspace
+		
+		cmp al, 0x0D
+		je .enter
+		
+		cmp cl, 0x3F
+		je .loop
+		
+		mov ah, 0x0E
+		int 0x10
+		
+		stosb
+		inc cl
+		jmp .loop
+		
+		.backspace:
+			cmp cl, 0
+			je .loop
+			
+			dec di
+			mov byte [di], 0
+			dec cl
+			
+			mov ah, 0x0E
+			mov al, 0x08
+			int 0x10
+			
+			mov al, ' '
+			int 0x10
+			
+			mov al, 0x08
+			int 0x10
+			
+			jmp .loop
+			
+		.enter:
+			mov al, 0
+			stosb
+			
+			mov ah, 0x0E
+			mov al, 0x0D
+			int 0x10
+			mov al, 0x0A
+			int 0x10
+			
+			ret
+
+strcmp:
+	.loop:
+		mov al, [si]
+		mov bl, [di]
+		cmp al, bl
+		jne .notequal
+		
+		cmp al, 0
+		je .done
+		
+		inc di
+		inc si
+		jmp .loop
+		
+		.notequal:
+			clc
+			ret
+			
+		.done:
+			stc
+			ret
+
+prompt db "ToastOS:~$ ", 0
+welcome db "Welcome to ToastOS", 13, 10, 0
+info db "For help type hlp", 13, 10, 0
+invalidCmd db ": Invalid Command", 13, 10, 0
+cmd_help db "hlp", 0
+msg_help db "Commands: hlp, cool, version", 13, 10, 0
+cmd_cool db "cool", 0
+msg_cool db "Joel is cool", 13, 10, 0
+cmd_version db "version", 0
+msg_version db  "Name: ToastOS", 13, 10, "Author: Joel Moore", 13, 10, "License: GPLv3", 13, 10, "Version: 0.1", 13, 10, 0
+buffer times 64 db 0
+
+times 510-($-$$) db 0
+dw 0xAA55
