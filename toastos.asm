@@ -151,16 +151,16 @@ strcmp:
 			stc
 			ret
 
-prompt db "ToastOS:~$ ", 0
-welcome db "Welcome to ToastOS", 13, 10, 0
+prompt db "OS:~$ ", 0
+welcome db "Welcome to OS (Omar's System)", 13, 10, 0
 info db "For help type hlp", 13, 10, 0
 invalidCmd db ": Invalid Command", 13, 10, 0
 cmd_help db "hlp", 0
-msg_help db "Commands: hlp, cool, version", 13, 10, 0
-cmd_cool db "cool", 0
-msg_cool db "Joel is cool", 13, 10, 0
-cmd_version db "version", 0
-msg_version db  "Name: ToastOS", 13, 10, "Author: Joel Moore", 13, 10, "License: GPLv3", 13, 10, "Version: 0.1", 13, 10, 0
+msg_help db "Commands: hlp, OS (To Start The System) , versn", 13, 10, 0
+cmd_cool db "OS", 0
+msg_cool db "Cannot Find The OS Kernel", 13, 10, 0
+cmd_version db "versn", 0
+msg_version db  "Name: OS", 13, 10, "Author: Omar Zouai", 13, 10, "License: GPLv3", 13, 10, "Version: 0.1", 13, 10, 0
 buffer times 64 db 0
 
 times 510-($-$$) db 0
